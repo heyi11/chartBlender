@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChartBlender — Authoring and Synchronizing Visualization Charts in Video</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & BASE ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fff;
+      color: #111;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { max-width: 100%; height: auto; display: block; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .nav-inner {
+      max-width: 960px; margin: 0 auto;
+      padding: 0 20px; height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-title { font-weight: 700; font-size: .95rem; color: #111; letter-spacing: -.01em; }
+    .nav-links { display: flex; gap: 24px; list-style: none; }
+    .nav-links a { color: #6b7280; font-size: .82rem; font-weight: 500; transition: color .1s; }
+    .nav-links a:hover { color: #2563eb; text-decoration: none; }
+    @media(max-width:640px){ .nav-links { display:none; } }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+    section { padding: 64px 0; }
+    section + section { border-top: 1px solid #f3f4f6; }
+
+    /* ── HERO ── */
+    #hero { padding: 72px 0 56px; text-align: center; }
+    .venue {
+      display: inline-block;
+      border: 1.5px solid #2563eb;
+      color: #2563eb;
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    #hero h1 {
+      font-size: clamp(1.7rem, 4.5vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -.03em;
+      line-height: 1.15;
+      max-width: 780px;
+      margin: 0 auto 20px;
+      color: #111;
+    }
+    .authors {
+      font-size: .95rem;
+      color: #374151;
+      margin-bottom: 4px;
+      line-height: 1.9;
+    }
+    .authors sup { font-size: .65rem; }
+    .affil {
+      font-size: .82rem;
+      color: #6b7280;
+      margin-bottom: 36px;
+    }
+    /* button row */
+    .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 0; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 6px;
+      font-size: .84rem; font-weight: 600;
+      text-decoration: none; transition: all .15s;
+      border: 1.5px solid transparent; cursor: pointer;
+      font-family: inherit;
+    }
+    .btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+    .btn-dark  { background: #111; color: #fff; border-color: #111; }
+    .btn-dark:hover  { background: #333; text-decoration: none; }
+    .btn-blue  { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn-blue:hover  { background: #1d4ed8; text-decoration: none; }
+    .btn-green { background: #059669; color: #fff; border-color: #059669; }
+    .btn-green:hover { background: #047857; text-decoration: none; }
+    .btn-ghost { background: transparent; color: #374151; border-color: #d1d5db; }
+    .btn-ghost:hover { background: #f9fafb; text-decoration: none; }
+
+    /* ── SECTION HEADINGS ── */
+    .sec-tag {
+      font-size: .7rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: #6b7280; margin-bottom: 6px;
+    }
+    h2 {
+      font-size: 1.55rem; font-weight: 700; letter-spacing: -.02em;
+      color: #111; margin-bottom: 16px; line-height: 1.25;
+    }
+    .lead { font-size: 1rem; color: #374151; margin-bottom: 28px; max-width: 680px; }
+
+    /* ── IMAGE / VIDEO PLACEHOLDERS ── */
+    .img-slot {
+      width: 100%;
+      background: #f9fafb;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #9ca3af;
+      font-size: .82rem;
+      font-weight: 500;
+      padding: 20px;
+      transition: border-color .15s;
+      text-align: center;
+    }
+    .img-slot:hover { border-color: #2563eb; color: #2563eb; }
+    .img-slot .slot-icon { font-size: 2rem; line-height: 1; }
+    .img-slot .slot-file {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      background: #f3f4f6;
+      padding: 3px 8px;
+      border-radius: 4px;
+      color: #6b7280;
+    }
+    .img-slot.tall  { min-height: 320px; }
+    .img-slot.med   { min-height: 240px; }
+    .img-slot.short { min-height: 160px; }
+    /* when real image is present, hide the placeholder overlay */
+    .img-wrap { position: relative; }
+    .img-wrap img { border-radius: 8px; width: 100%; }
+    .img-caption {
+      text-align: center; font-size: .82rem; color: #6b7280;
+      margin-top: 10px; line-height: 1.5;
+    }
+
+    /* video slot */
+    .video-slot {
+      width: 100%; aspect-ratio: 16/9;
+      background: #111;
+      border-radius: 8px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #6b7280; gap: 12px;
+      border: 2px dashed #374151;
+      cursor: pointer; transition: border-color .15s;
+      text-align: center; padding: 20px;
+      position: relative;
+    }
+    .video-slot:hover { border-color: #2563eb; }
+    .video-slot .play-circle {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      border: 2px solid rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .video-slot .play-circle svg { width: 24px; height: 24px; fill: #fff; margin-left: 3px; }
+    .video-slot p { color: #9ca3af; font-size: .82rem; margin: 0; }
+    .video-slot .slot-file {
+      font-family: 'JetBrains Mono', monospace; font-size: .75rem;
+      color: #4b5563; background: #1f2937; padding: 3px 10px; border-radius: 4px;
+    }
+    .video-embed { width: 100%; aspect-ratio: 16/9; border-radius: 8px; overflow: hidden; }
+    .video-embed iframe, .video-embed video {
+      width: 100%; height: 100%; border: none; border-radius: 8px;
+    }
+
+    /* ── ABSTRACT ── */
+    #abstract p { font-size: .98rem; color: #374151; margin-bottom: 14px; }
+    .keyword-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .kw {
+      font-size: .75rem; font-weight: 600;
+      background: #eff6ff; color: #2563eb;
+      border-radius: 999px; padding: 3px 12px;
+    }
+
+    /* ── TWO-COL ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media(max-width:640px){ .two-col { grid-template-columns: 1fr; } }
+    .three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    @media(max-width:680px){ .three-col { grid-template-columns: 1fr; } }
+
+    /* ── FIGURE GRID ── */
+    .fig-row { display: grid; gap: 16px; margin-top: 24px; }
+    .fig-row.cols-2 { grid-template-columns: 1fr 1fr; }
+    .fig-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    @media(max-width:600px){
+      .fig-row.cols-2, .fig-row.cols-3 { grid-template-columns: 1fr; }
+    }
+
+    /* ── CONTRIBUTION CARDS ── */
+    .contrib-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 24px; }
+    @media(max-width:640px){ .contrib-cards { grid-template-columns: 1fr; } }
+    .cc {
+      border: 1px solid #e5e7eb; border-radius: 8px; padding: 22px 20px;
+      transition: box-shadow .15s;
+    }
+    .cc:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    .cc-num { font-size: 1.6rem; font-weight: 700; color: #2563eb; line-height: 1; margin-bottom: 8px; }
+    .cc h3 { font-size: .92rem; font-weight: 700; margin-bottom: 6px; }
+    .cc p { font-size: .82rem; color: #6b7280; margin: 0; }
+
+    /* ── PIPELINE STEPS ── */
+    .steps { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+    .step { display: flex; gap: 12px; align-items: flex-start; }
+    .step-badge {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: #2563eb; color: #fff;
+      font-size: .7rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .step-badge.gray { background: #6b7280; }
+    .step p { font-size: .85rem; color: #374151; margin: 0; }
+    .step strong { color: #111; }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; margin-top: 24px; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    thead th {
+      background: #111; color: #fff; padding: 9px 16px;
+      text-align: left; font-weight: 600; font-size: .78rem;
+    }
+    tbody td { padding: 9px 16px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr.ours td { background: #eff6ff; color: #2563eb; font-weight: 600; }
+
+    /* ── STATS ROW ── */
+    .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-top: 24px; }
+    @media(max-width:600px){ .stats { grid-template-columns: repeat(2,1fr); } }
+    .stat {
+      text-align: center; padding: 20px 12px;
+      border: 1px solid #e5e7eb; border-radius: 8px;
+    }
+    .stat-n { font-size: 2rem; font-weight: 700; color: #2563eb; line-height: 1; letter-spacing: -.03em; }
+    .stat-l { font-size: .75rem; color: #6b7280; margin-top: 4px; font-weight: 500; }
+
+    /* ── DATASET BLOCK ── */
+    .dataset-block {
+      background: #0f172a; border-radius: 10px;
+      padding: 40px; color: #fff; margin-top: 28px;
+    }
+    .dataset-block h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+    .dataset-block .desc { color: #94a3b8; font-size: .9rem; margin-bottom: 24px; }
+    .dataset-stats-row { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 28px; }
+    .ds-s .n { font-size: 1.6rem; font-weight: 700; color: #38bdf8; line-height: 1; }
+    .ds-s .l { font-size: .72rem; color: #475569; margin-top: 2px; }
+    .dataset-block .btn-row { justify-content: flex-start; }
+
+    /* url input row */
+    .url-row {
+      display: flex; align-items: center; gap: 10px;
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 6px; padding: 10px 14px; margin-top: 16px;
+    }
+    .url-row label { font-size: .78rem; color: #64748b; white-space: nowrap; font-weight: 500; }
+    .url-row input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: 'JetBrains Mono', monospace; font-size: .78rem; color: #7dd3fc;
+    }
+    .url-row input::placeholder { color: #334155; }
+
+    /* ── DEMO GALLERY ── */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 28px;
+    }
+    /* first card spans full width */
+    .gallery-grid .gallery-card:first-child {
+      grid-column: 1 / -1;
+    }
+    @media(max-width:600px){
+      .gallery-grid { grid-template-columns: 1fr; }
+      .gallery-grid .gallery-card:first-child { grid-column: auto; }
+    }
+    .gallery-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .gallery-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.1); }
+    /* video thumbnail / slot inside card */
+    .gallery-card .gc-media {
+      width: 100%; aspect-ratio: 16/9;
+      background: #111;
+      position: relative; overflow: hidden;
+      cursor: pointer;
+    }
+    .gallery-card .gc-media img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block;
+    }
+    /* placeholder slot inside card */
+    .gallery-card .gc-slot {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; color: #4b5563;
+      font-size: .78rem; font-weight: 500;
+      text-align: center; padding: 16px;
+      background: #111;
+      border: 2px dashed #374151;
+    }
+    .gallery-card .gc-slot .si { font-size: 1.8rem; line-height: 1; }
+    .gallery-card .gc-slot .sf {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; color: #4b5563;
+      background: #1f2937; padding: 2px 8px; border-radius: 3px;
+    }
+    /* play overlay (shown when thumbnail present) */
+    .gc-play-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.3);
+      opacity: 0; transition: opacity .2s;
+    }
+    .gallery-card .gc-media:hover .gc-play-overlay { opacity: 1; }
+    .gc-play-circle {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(255,255,255,.9);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gc-play-circle svg { width: 22px; height: 22px; fill: #111; margin-left: 3px; }
+    /* card meta */
+    .gc-meta {
+      padding: 14px 16px 16px;
+      background: #fff;
+    }
+    .gc-tag {
+      display: inline-block;
+      font-size: .68rem; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: #2563eb;
+      background: #eff6ff; border-radius: 3px;
+      padding: 2px 7px; margin-bottom: 6px;
+    }
+    .gc-title {
+      font-size: .88rem; font-weight: 600; color: #111;
+      margin-bottom: 4px; line-height: 1.4;
+    }
+    .gc-desc { font-size: .78rem; color: #6b7280; margin: 0; line-height: 1.5; }
+    /* iframe embed inside card */
+    .gallery-card .gc-embed {
+      width: 100%; aspect-ratio: 16/9;
+    }
+    .gallery-card .gc-embed iframe,
+    .gallery-card .gc-embed video {
+      width: 100%; height: 100%; border: none; display: block;
+    }
+
+    /* ── BIBTEX ── */
+    .bibtex-block {
+      background: #0f172a; border-radius: 8px;
+      padding: 28px 28px 28px 32px;
+      margin-top: 20px; position: relative;
+      overflow-x: auto;
+    }
+    .bibtex-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem; line-height: 1.8; color: #e2e8f0;
+    }
+    .kwd { color: #7dd3fc; }
+    .val { color: #86efac; }
+    .copy-btn {
+      position: absolute; top: 14px; right: 14px;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+      border-radius: 5px; color: #94a3b8; font-size: .72rem;
+      padding: 4px 10px; cursor: pointer; font-family: inherit; font-weight: 600;
+      transition: all .15s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid #f3f4f6;
+      text-align: center; padding: 32px 24px;
+      font-size: .78rem; color: #9ca3af;
+    }
+    footer a { color: #6b7280; }
+    footer a:hover { color: #2563eb; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <span class="nav-title">ChartBlender</span>
+    <ul class="nav-links">
+      <li><a href="#abstract">Abstract</a></li>
+      <li><a href="#video">Video</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#dataset">Dataset</a></li>
+      <li><a href="#bibtex">BibTeX</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<div class="page">
+<section id="hero">
+  <div class="venue">IEEE VIS 2025</div>
+  <h1>ChartBlender: An Interactive System for Authoring and Synchronizing Visualization Charts in Video</h1>
+  <p class="authors">
+    Yi He&nbsp;&nbsp;
+    Yuqi Liu&nbsp;&nbsp;
+    Chenpu Li&nbsp;&nbsp;
+    Ruoyan Chen&nbsp;&nbsp;
+    Chuer Chen&nbsp;&nbsp;
+    Shengqi Dang&nbsp;&nbsp;
+    <a href="mailto:nan.cao@gmail.com">Nan Cao</a><sup>†</sup>
+  </p>
+  <p class="affil">Intelligent Big Data Visualization Lab, Tongji University</p>
+  <div class="btn-row">
+    <a href="static/paper.pdf" class="btn btn-dark">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
+      Paper
+    </a>
+    <a href="#video" class="btn btn-blue">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      Video
+    </a>
+    <a href="https://github.com/YOUR_USERNAME/ChartBlender" class="btn btn-ghost">
+      <svg viewBox="0 0 24 24"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.38 7.86 10.9.57.1.78-.25.78-.55v-1.92c-3.2.7-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.67 1.24 3.32.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.19a11.1 11.1 0 0 1 2.9-.39c.98.01 1.97.13 2.9.39 2.2-1.5 3.17-1.19 3.17-1.19.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.69 5.41-5.25 5.7.41.35.78 1.05.78 2.12v3.14c0 .3.2.65.79.54C20.22 21.37 23.5 17.07 23.5 12 23.5 5.73 18.27.5 12 .5z"/></svg>
+      Code
+    </a>
+    <a href="#dataset" class="btn btn-green">
+      <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      Dataset
+    </a>
+  </div>
+</section>
+
+<!-- ═══ TEASER ═══ -->
+<section id="teaser" style="padding-top:0;padding-bottom:48px;">
+  <div class="img-wrap">
+    <img src="static/images/teaser.png" alt="ChartBlender teaser" />
+  </div>
+  <p class="img-caption"><b>Figure 1.</b> ChartBlender provides an integrated workflow for chart authoring, embedding, and synchronization within video scenes. Users can create diverse and stable visualization-embedded videos across a wide range of real-world scenarios including journalism, sports, and documentaries.</p>
+</section>
+
+<!-- ═══ ABSTRACT ═══ -->
+<section id="abstract">
+  <div class="sec-tag">Abstract</div>
+  <p>Embedded data visualizations have emerged as a powerful narrative medium for conveying complex information within video footage. However, creating such content remains labor-intensive, as existing workflows rely on manual frame-by-frame adjustments to ensure spatial and temporal consistency. To address these challenges, we present <strong>ChartBlender</strong>, an interactive authoring system designed to streamline the creation, embedding, and automatic synchronization of data visualizations within video scenes.</p>
+  <p>We develop a tracking pipeline that supports both <em>object tracking</em> and <em>camera tracking</em>, ensuring robust alignment of visualizations with dynamic video content. To maintain visual clarity and aesthetic coherence, we also explore the design space of video-suited visualizations and develop a library of customizable templates optimized for video embedding. We evaluated ChartBlender through two controlled experiments and expert interviews with five domain experts. Results show that our system enables accurate synchronization and accelerates the production of data-driven videos.</p>
+  <div class="keyword-row">
+    <span class="kw">Data Visualization</span>
+    <span class="kw">Video Editing</span>
+    <span class="kw">Object Tracking</span>
+    <span class="kw">Camera Tracking</span>
+    <span class="kw">Visual Storytelling</span>
+    <span class="kw">Interactive Authoring</span>
+  </div>
+</section>
+
+<!-- ═══ VIDEO ═══ -->
+<section id="video">
+  <div class="sec-tag">Demo Video</div>
+  <h2>System Demo</h2>
+  <p class="lead">Watch how ChartBlender embeds and synchronizes data visualizations in real-world footage.</p>
+
+  <!-- ── Option A: YouTube embed ──
+       Replace VIDEO_ID with your YouTube video ID, then delete the video-slot div below.
+  <div class="video-embed">
+    <iframe src="https://www.youtube.com/embed/VIDEO_ID"
+      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+  </div>
+  -->
+
+  <div class="video-embed">
+    <video controls>
+      <source src="static/videos/chart blender.mp4" type="video/mp4" />
+    </video>
+  </div>
+</section>
+
+<!-- ═══ CONTRIBUTIONS ═══ -->
+<section id="contributions">
+  <div class="sec-tag">Contributions</div>
+  <h2>What We Contribute</h2>
+  <div class="contrib-cards">
+    <div class="cc">
+      <div class="cc-num">01</div>
+      <h3>System</h3>
+      <p>End-to-end authoring tool with one-click anchor, 3D adjustment, and real-time in-context preview for creating data-driven videos.</p>
+    </div>
+    <div class="cc">
+      <div class="cc-num">02</div>
+      <h3>Design Space</h3>
+      <p>Characterization of video-suited visualizations derived from 200 professional videos, covering 5 chart types and 2 motion modes.</p>
+    </div>
+    <div class="cc">
+      <div class="cc-num">03</div>
+      <h3>Evaluation</h3>
+      <p>Two quantitative tracking experiments on standard benchmarks plus interviews with 5 professional data journalists.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SYSTEM ═══ -->
+<section id="method">
+  <div class="sec-tag">Method</div>
+  <h2>System Overview</h2>
+  <p class="lead">ChartBlender consists of two modules — the Chart Editor and Chart Embedder — that together cover the full authoring workflow.</p>
+
+  <!-- System UI screenshot -->
+  <div class="img-wrap" style="margin-bottom:10px;">
+    <img src="static/images/fig_system_ui.png" alt="ChartBlender system interface" />
+  </div>
+  <p class="img-caption"><b>Figure 2.</b> The ChartBlender system interface: (1) Chart View for creating and editing visualizations, (2) Video View for embedding charts and previewing results, (3) Timeline View for managing chart segments.</p>
+
+  <div class="two-col" style="margin-top:36px;">
+    <div>
+      <h3 style="font-size:.95rem;font-weight:700;margin-bottom:12px;">Chart Editor</h3>
+      <div class="steps">
+        <div class="step"><div class="step-badge">1</div><p>Upload dataset via drag-and-drop; raw data displayed inline</p></div>
+        <div class="step"><div class="step-badge">2</div><p>Select chart type (bar, line, area, text, 3D) and map data fields to visual channels</p></div>
+        <div class="step"><div class="step-badge">3</div><p>Adjust style properties — color, line thickness, theme — with immediate preview</p></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-size:.95rem;font-weight:700;margin-bottom:12px;">Chart Embedder</h3>
+      <div class="steps">
+        <div class="step"><div class="step-badge">1</div><p><strong>One-click anchor</strong>: click any pixel to specify the tracking point</p></div>
+        <div class="step"><div class="step-badge">2</div><p>Choose tracking mode: <strong>Camera Tracking</strong> (static scene) or <strong>Object Tracking</strong> (moving target)</p></div>
+        <div class="step"><div class="step-badge">3</div><p>3D pan / zoom / rotate for fine-grained spatial placement</p></div>
+        <div class="step"><div class="step-badge">4</div><p>Multi-chart timeline: add, delete, trim segments independently</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DESIGN SPACE ═══ -->
+<section id="designspace">
+  <div class="sec-tag">Design Space</div>
+  <h2>Video-Suited Visualization Templates</h2>
+  <p class="lead">A corpus study of 200 professional videos revealed design patterns across 5 chart types, 2 motion modes, and subtle temporal animation behaviors.</p>
+
+  <!-- Design space figure -->
+  <div class="img-wrap" style="margin-bottom:10px;">
+    <img src="static/images/design_space.png" alt="Design space of video-suited visualizations" />
+  </div>
+  <p class="img-caption"><b>Figure 3.</b> The design space of video-suited visualizations organized along three dimensions: chart type, motion mode (object/camera tracking), and temporal behavior (animation scheme and on-screen duration).</p>
+
+</section>
+
+<!-- ═══ PIPELINE ═══ -->
+<section id="pipeline">
+  <div class="sec-tag">Algorithm</div>
+  <h2>Depth-Aware Tracking Pipeline</h2>
+  <p class="lead">A two-stage pipeline — depth estimation then pose/trajectory estimation — provides perspective-consistent 3D chart placement without camera metadata.</p>
+
+  <!-- Pipeline figure -->
+  <div class="img-wrap" style="margin-bottom:10px;">
+    <img src="static/images/fig_pipeline.png" alt="ChartBlender tracking pipeline" />
+  </div>
+  <p class="img-caption"><b>Figure 4.</b> The two pipelines of the Chart Embedder. Camera tracking: depth estimation + camera pose estimation. Object tracking: depth estimation + object trajectory estimation (2D tracking → 3D translation → 3D rotation).</p>
+</section>
+
+
+<!-- ═══ DEMO GALLERY ═══ -->
+<section id="gallery">
+  <div class="sec-tag">Gallery</div>
+  <h2>Demo Examples</h2>
+  <p class="lead">Four real-world examples showing ChartBlender across different scenarios — sports, journalism, documentary, and social media.</p>
+
+  <div class="gallery-grid">
+
+    <!-- ── Card 1 (featured, full-width) ── -->
+    <div class="gallery-card">
+      <div class="gc-embed">
+        <video controls src="static/videos/E1 -1 .mov"></video>
+      </div>
+      <div class="gc-meta">
+        <span class="gc-tag">Camera Tracking</span>
+        <div class="gc-title">Aerial Drone Shot — Volunteer Program Bar Chart</div>
+        <p class="gc-desc">A 3D bar chart anchored to terrain in an aerial drone shot, depicting year-by-year changes in volunteer participation while following camera motion.</p>
+      </div>
+    </div>
+
+    <!-- ── Card 2 ── -->
+    <div class="gallery-card">
+      <div class="gc-embed">
+        <video controls src="static/videos/E2- 1.mov"></video>
+      </div>
+      <div class="gc-meta">
+        <span class="gc-tag">Object Tracking</span>
+        <div class="gc-title">NBA Three-Point Shots — Sports Broadcast</div>
+        <p class="gc-desc">Line chart showing three-point shot percentages, bound to a moving player across camera cuts.</p>
+      </div>
+    </div>
+
+    <!-- ── Card 3 ── -->
+    <div class="gallery-card">
+      <div class="gc-embed">
+        <video controls src="static/videos/E3 - 1 2.mov"></video>
+      </div>
+      <div class="gc-meta">
+        <span class="gc-tag">Camera Tracking</span>
+        <div class="gc-title">Shanghai Cruise Throughput — Journalism</div>
+        <p class="gc-desc">Area chart anchored to a port scene, visualizing passenger throughput data across years for a news documentary.</p>
+      </div>
+    </div>
+
+    <!-- ── Card 4 ── -->
+    <div class="gallery-card">
+      <div class="gc-embed">
+        <video controls src="static/videos/E2 - 3.mov"></video>
+      </div>
+      <div class="gc-meta">
+        <span class="gc-tag">Object Tracking</span>
+        <div class="gc-title">Food Delivery Rider Population — Social Media</div>
+        <p class="gc-desc">Text and data cards tracking a rider through urban footage, revealing delivery industry growth trends for short-form social content.</p>
+      </div>
+    </div>
+
+  </div><!-- /gallery-grid -->
+</section>
+
+<!-- ═══ DATASET ═══ -->
+<section id="dataset">
+  <div class="sec-tag">Dataset</div>
+  <h2>Data &amp; Code</h2>
+  <p class="lead">We release the video corpus, visualization templates, and evaluation code to support future research.</p>
+
+  <div class="dataset-block">
+    <h3>ChartBlender Dataset</h3>
+    <p class="desc">200 professionally produced chart-in-video examples across sports, journalism, documentary, and social media, annotated with chart type, motion mode, and temporal behavior.</p>
+    <div class="dataset-stats-row">
+      <div class="ds-s"><div class="n">200</div><div class="l">Videos</div></div>
+      <div class="ds-s"><div class="n">5</div><div class="l">Chart Types</div></div>
+      <div class="ds-s"><div class="n">2</div><div class="l">Motion Modes</div></div>
+      <div class="ds-s"><div class="n">10+</div><div class="l">Domains</div></div>
+    </div>
+    <div class="btn-row">
+      <a href="static/dataset.zip" download class="btn btn-green">
+        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        Download Dataset
+      </a>
+      <a href="https://github.com/YOUR_USERNAME/ChartBlender" class="btn btn-ghost" style="color:#94a3b8;border-color:#334155;">
+        <svg viewBox="0 0 24 24"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.38 7.86 10.9.57.1.78-.25.78-.55v-1.92c-3.2.7-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.67 1.24 3.32.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.19a11.1 11.1 0 0 1 2.9-.39c.98.01 1.97.13 2.9.39 2.2-1.5 3.17-1.19 3.17-1.19.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.69 5.41-5.25 5.7.41.35.78 1.05.78 2.12v3.14c0 .3.2.65.79.54C20.22 21.37 23.5 17.07 23.5 12 23.5 5.73 18.27.5 12 .5z"/></svg>
+        GitHub Repo
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BIBTEX ═══ -->
+<section id="bibtex">
+  <div class="sec-tag">Citation</div>
+  <h2>BibTeX</h2>
+  <p>If ChartBlender is useful for your research, please cite:</p>
+  <div class="bibtex-block">
+    <button class="copy-btn" onclick="copyBib()">Copy</button>
+    <pre id="bib"><span class="kwd">@article</span>{he2025chartblender,
+  <span class="kwd">title</span>   = {<span class="val">ChartBlender: An Interactive System for Authoring and
+            Synchronizing Visualization Charts in Video</span>},
+  <span class="kwd">author</span>  = {<span class="val">He, Yi and Liu, Yuqi and Li, Chenpu and Chen, Ruoyan and
+            Chen, Chuer and Dang, Shengqi and Cao, Nan</span>},
+  <span class="kwd">journal</span> = {<span class="val">IEEE VIS</span>},
+  <span class="kwd">year</span>    = {<span class="val">2025</span>},
+}</pre>
+  </div>
+</section>
+
+</div><!-- /page -->
+
+<!-- FOOTER -->
+<footer>
+  <p>ChartBlender &nbsp;·&nbsp; <a href="https://idvxlab.com" target="_blank">Intelligent Big Data Visualization Lab</a>, Tongji University &nbsp;·&nbsp; IEEE VIS 2025</p>
+  <p style="margin-top:4px;">Corresponding author: <a href="mailto:nan.cao@gmail.com">Nan Cao</a></p>
+</footer>
+
+<script>
+  /* ── copy bibtex ── */
+  function copyBib() {
+    const text = document.getElementById('bib').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  /* ── preview video in-page ── */
+  function loadPreview() {
+    const url = document.getElementById('yt-input').value.trim();
+    if (!url) return;
+    const slot = document.getElementById('video-slot');
+    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    let html;
+    if (ytMatch) {
+      html = `<div class="video-embed"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe></div>`;
+    } else {
+      html = `<div class="video-embed"><video controls src="${url}" style="width:100%;height:100%;border-radius:8px;background:#000;"></video></div>`;
+    }
+    slot.outerHTML = html;
+    document.querySelector('.url-row')?.remove();
+  }
+
+  document.getElementById('yt-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadPreview();
+  });
+
+  /* ── gallery video loader ── */
+  function loadGalleryVideo(n) {
+    const url = document.getElementById('gc-url-' + n).value.trim();
+    if (!url) return;
+    const media = document.getElementById('gc-media-' + n);
+    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    let inner;
+    if (ytMatch) {
+      inner = `<div class="gc-embed"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe></div>`;
+    } else {
+      inner = `<div class="gc-embed"><video controls autoplay muted src="${url}"></video></div>`;
+    }
+    media.outerHTML = inner;
+  }
+
+  /* clicking a card that has a thumbnail plays inline */
+  function openGalleryVideo(n) {
+    const url = document.getElementById('gc-url-' + n)?.value.trim();
+    if (url) loadGalleryVideo(n);
+  }
+
+  /* ── save dataset URL ── */
+  function saveDatasetUrl() {
+    const url = document.getElementById('dataset-url').value.trim();
+    if (!url) return;
+    document.getElementById('dataset-dl-btn').href = url;
+    document.getElementById('dataset-dl-btn').target = '_blank';
+    const btn = document.querySelector('.url-row button');
+    btn.textContent = 'Saved!';
+    setTimeout(() => btn.textContent = 'Save', 2000);
+  }
+</script>
+</body>
+</html>
